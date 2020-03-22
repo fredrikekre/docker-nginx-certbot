@@ -28,5 +28,7 @@ RUN mkdir -p /scripts/startup
 RUN rm -f /etc/nginx/conf.d/*
 COPY nginx_conf.d/ /etc/nginx/conf.d/
 
+RUN echo "stream {\n    include /etc/nginx/conf.stream.d/*.conf;\n}" >> /etc/nginx/nginx.conf
+
 ENTRYPOINT []
 CMD ["/bin/bash", "/scripts/entrypoint.sh"]

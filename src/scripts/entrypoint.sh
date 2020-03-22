@@ -9,6 +9,7 @@ trap "kill 0" EXIT
 
 # first include any user configs if they've been mounted
 template_user_configs
+template_user_configs /etc/nginx/user.conf.stream.d /etc/nginx/conf.stream.d
 
 # Immediately run auto_enable_configs so that nginx is in a runnable state
 auto_enable_configs

@@ -15,7 +15,7 @@ error() {
 # /etc/letsencrypt/live/<primary_domain_name>/privkey.pem
 parse_domains() {
     # For each configuration file in /etc/nginx/conf.d/*.conf*
-    for conf_file in /etc/nginx/conf.d/*.conf*; do
+    for conf_file in /etc/nginx/conf.d/*.conf* /etc/nginx/conf.stream.d/*.conf*; do
         sed -n -r -e 's&^\s*ssl_certificate_key\s*\/etc/letsencrypt/live/(.*)/privkey.pem;\s*(#.*)?$&\1&p' $conf_file | xargs echo
     done
 }
@@ -29,7 +29,7 @@ parse_keyfiles() {
 # keyfiles), return 1 otherwise
 keyfiles_exist() {
     for keyfile in $(parse_keyfiles $1); do
-	    currentfile=${keyfile//$'\r'/}
+        currentfile=${keyfile//$'\r'/}
         if [ ! -f $currentfile ]; then
             echo "Couldn't find keyfile $currentfile for $1"
             return 1
@@ -41,7 +41,7 @@ keyfiles_exist() {
 # Helper function that sifts through /etc/nginx/conf.d/, looking for configs
 # that don't have their keyfiles yet, and disabling them through renaming
 auto_enable_configs() {
-    for conf_file in /etc/nginx/conf.d/*.conf*; do
+    for conf_file in /etc/nginx/conf.d/*.conf* /etc/nginx/conf.stream.d/*.conf*; do
         if keyfiles_exist $conf_file; then
             if [ ${conf_file##*.} = nokey ]; then
                 echo "Found all the keyfiles for $conf_file, enabling..."
@@ -83,7 +83,7 @@ is_renewal_required() {
     # If the file does not exist assume a renewal is required
     last_renewal_file="/etc/letsencrypt/live/$1/privkey.pem"
     [ ! -e "$last_renewal_file" ] && return;
-    
+
     # If the file exists, check if the last renewal was more than a week ago
     one_week_sec=604800
     now_sec=$(date -d now +%s)
@@ -101,6 +101,7 @@ is_renewal_required() {
 template_user_configs() {
     SOURCE_DIR="${1-/etc/nginx/user.conf.d}"
     TARGET_DIR="${2-/etc/nginx/conf.d}"
+    mkdir -p $TARGET_DIR
 
     # envsubst needs dollar signs in front of all variable names
     DENV=$(echo ${ENVSUBST_VARS} | sed -E 's/\$*([^ ]+)/\$\1/g')
